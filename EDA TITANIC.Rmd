@@ -1,0 +1,210 @@
+---
+title: "TITANIC"
+author: "Elvi Khairunnisa"
+date: '2022-04-20'
+output:
+  html_document:
+    df_print: paged
+    theme: journal
+    highlight: breezedark
+    toc: true
+    toc_float: true
+---
+***
+# Exploratory Data Analysis
+***
+
+## 1. Pendahuluan
+
+Pada LBB (*Learning by Building*) ini akan dilakukan *Exploratory Data Analysis* menggunakan *dataset* Titanic. 
+*Dataset* ini berisi tentang biodata dari Penumpang Kapal Titanic yang akan ditentukan apakah biodata tersebut dapat digunakan untuk memprediksi penumpang tersebut selamat atau tidak.
+ 
+
+## 2. Mengimport Data
+
+Hal paling pertama yang harus dilakukan adalah pastikan lokasi folder *dataset* yang ingin diinput sama dengan *Rmd* ini. 
+Kemudian, lanjut dengan *read dataset*. Ada dua file *dataset* yang digunakan yaitu *train.csv* dan *test.csv*.
+
+```{r}
+train<-read.csv("train.csv")
+```
+```{r}
+test<-read.csv("test.csv")
+```
+
+Kedua *dataset* tersebut telah terbaca dan terinput dengan nama *train* dan *test*. 
+Untuk mengetahui isi dari kedua *dataset* tersebut, lakukan ke tahap selanjutnya yaitu dengan cara menginspeksi data.
+
+
+## 3. Menginspeksi Data
+
+```{r}
+head(train)
+```
+```{r}
+head(test)
+```
+head () digunakan untuk mengetahui 6 baris data pertama.
+
+```{r}
+tail(train)
+```
+```{r}
+tail(test)
+```
+
+tail () digunakan untuk mengetahui 6 baris data terakhir.
+
+```{r}
+dim (train)
+```
+```{r}
+dim(test)
+```
+
+dim () digunakan untuk mengetahui banyak baris dan kolom dari tabel *dataset* tersebut.
+
+```{r}
+colnames(train)
+```
+```{r}
+colnames(test)
+```
+
+colnames() digunakan untuk mengetahui nama kolom pada tabel *dataset* tersebut.
+
+Karena terdapat dua *dataset*, agar dapat digunakan dan diolah, maka perlu dilakukan penggabungan *dataset*. 
+Sebelum dilakukan penggabungan, dilakukan proses pembuatan kolom baru pada *dataset test* (karena kolom *dataset* test lebih sedikit dari train) yaitu kolom Survived dengan nilai NA yang bertujuan agar jumlah kolom sama dan dapat digabungkan.
+
+```{r}
+test$Survived <- NA
+titanic <- rbind(train, test)
+head(titanic)
+```
+```{r}
+tail(titanic)
+```
+```{r}
+dim(titanic)
+```
+```{r}
+colnames(titanic)
+```
+Dari setiap kolom tersebut, akan dilakukan pengecekan tipe data yaitu dengan menggunakan str ()
+```{r}
+str(titanic)
+```
+Atau juga dapat menggunakan sapply(#object, class), untuk mengecek tipe data setiap kolom
+
+```{r}
+sapply(titanic,class)
+```
+
+Agar memperoleh pengolahan data yang benar, ubah beberapa tipe data kolom menjadi factor
+```{r}
+titanic[, c("Pclass","Sex","SibSp","Parch","Embarked","Survived")] <- lapply(
+  titanic[, c("Pclass","Sex","SibSp","Parch","Embarked","Survived")], as.factor)
+```
+
+Cek kembali tipe datanya
+```{r}
+sapply(titanic,class)
+```
+
+Kemudian cek *missing value* apakah ada atau tidak
+
+```{r}
+anyNA(titanic)
+```
+Ternyata ada *missing value*. Untuk lebih memastikan tidak ada *missing value* pada setiap kolom, gunakan is.na pada kolom
+
+```{r}
+colSums(is.na(titanic))
+```
+
+Ternyata terdapat 418 NA pada kolom Survived, 263 NA pada kolom Age dan 1 NA pada kolom Fare. 
+Agar datanya dapat digunakan, dilakukan proses imputasi dengan nilai NA menggunakan nilai median pada kolom Age dan Fare, sedangkan kolom Survived tidak perlu dilakukan. 
+```{r}
+median(titanic$Age[!is.na(titanic$Age)])
+```
+
+```{r}
+median(titanic$Fare[!is.na(titanic$Fare)])
+```
+```{r}
+titanic$Age[is.na(titanic$Age)] = 28
+titanic$Fare[is.na(titanic$Fare)] = 14.454
+```
+
+```{r}
+colSums(is.na(titanic))
+```
+Terlihat bahwa sudah tidak ada *missing value* pada kolom Age dan Fare, sehingga data siap diolah.
+
+## 4. Mengolah Data
+
+```{r}
+summary(titanic)
+```
+Dari summary tersebut, dapat diperoleh beberapa informasi:
+
+1. Nilai Max = 1309 pada PassengerId mendeskripsikan jumlah penumpang dalam kapal Titanic sebanyak 1309, karena PassengerId nya berupa index
+2. Penumpang Titanic selamat 342 orang (Survived = 1), tidak selamat 549 orang (Survived = 0), 418 NA karena baris *dataset test* awalnya tidak punya kolom Survived, jadi tidak masalah jika dibaikan
+3. Banyak Pria = 843 orang dan Wanita = 466
+4. Usia dari penumpang kapal Titanic berusia paling muda 0.17 tahun dan usia paling tua 80 tahun
+5. Tarif penumpang Fare paling tinggi sebesar 512.319
+6. Embarked tujuan terbanyak penumpang kapal Titanic ke tujuan S (Southampton) = 914, C (Cherbourg) = 272 dan Q (Queenstown) = 123
+
+
+Untuk lebih jelas, dilakukan pembuatan plot pada beberapa variabel.
+
+## 5. Pembuatan Plot
+
+*Barplot Penumpang Selamat dan Tidak Selamat*
+
+Diperoleh dari summary (titanic) penumpang selamat = 342 orang, tidak selamat = 549 orang.
+```{r}
+barplot(table(titanic$Survived))
+```
+
+
+*Plot Berupa Proporsi Penumpang Selamat dan Tidak Selamat Menurut Jenis Kelamin*
+
+Proporsinya:
+
+```{r}
+prop.table(table(titanic$Sex, titanic$Survived))*100
+```
+Penumpang Kapal Titanic Pria lebih banyak yang selamat yaitu 52%, sedangkan wanita hanya 9.1%.
+
+```{r}
+plot(table(titanic$Sex, titanic$Survived))
+```
+
+
+*Plot Penumpang Selamat dan Tidak Selamat Menurut Tipe Kelas (Pclass)*
+
+Agar plot lebih jelas dilakukan penggantian nama pada isi kolom Pclass
+```{r}
+titanic$Pclass <- sapply(as.character(titanic$Pclass), switch,
+                         "1" = "1st Class",
+                         "2" = "2nd Class",
+                         "3" = "3rd Class")
+```
+
+
+```{r}
+table(titanic$Survived, titanic$Pclass)
+```
+
+```{r}
+plot(table(titanic$Survived, titanic$Pclass))
+```
+
+Dapat dilihat bahwa jumlah penumpang yang memesan tiket 1st Class lebih banyak yang selamat daripada yang tidak selamat, penumpang yang memesan tiket 2nd Class seimbang jumlah yang selamat dan tidak selamatnya, dan penumpang yang memesan tiket 3rd Class lebih banyak yang tidak selamat daripada yang selamat.
+
+
+## 6. Kesimpulan
+
+Ternyata banyak faktor yang mempengaruhi tingkat keselamatan dari penumpang kapal Titanic. Mulai dari jenis kelamin (sex), Pclass dan masih banyak lagi. Dataset ini masih dapat dieksplor lebih dalam lagi sehingga dapat mendapatkan kesimpulan yang lebih baik dan akurat.
+
